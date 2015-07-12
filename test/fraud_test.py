@@ -128,3 +128,27 @@ class OrderShould(unittest.TestCase):
         )
         self.assertEqual(
             expected_address, order.canonical_address)
+
+    @istest
+    def maps_street_address_to_canonical_form(self):
+        self.assert_street_address_mapped(
+            '123 sesame st.', '123 sesame street')
+        self.assert_street_address_mapped(
+            '123 sesame rd.', '123 sesame road')
+        self.assert_street_address_mapped(
+            '123 sesame Rd.', '123 sesame road')
+        self.assert_street_address_mapped(
+            '123 sesame street', '123 sesame street')
+        self.assert_street_address_mapped(
+            '123 sesame lane', '123 sesame lane')
+
+    def assert_street_address_mapped(self, given, expected):
+        order = self.get_order(street_address=given)
+        expected_address = '{},{},{},{}'.format(
+            expected,
+            self.test_city,
+            self.test_state,
+            self.test_zipcode
+        )
+        self.assertEqual(
+            expected_address, order.canonical_address)
