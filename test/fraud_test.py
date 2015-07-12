@@ -113,29 +113,17 @@ class OrderShould(unittest.TestCase):
 
     @istest
     def map_states_to_canonical_form(self):
-        order = self.get_order(state='California')
-        self.assertEqual(
-            self.test_address, order.canonical_address)
+        self.assert_state_mapped('California', 'ca')
+        self.assert_state_mapped('CAlIfoRniA', 'ca')
+        self.assert_state_mapped('Illinois', 'il')
+        self.assert_state_mapped('New York', 'ny')
 
-        order = self.get_order(state='CaLiforniA')
-        self.assertEqual(
-            self.test_address, order.canonical_address)
-
-        order = self.get_order(state='Illinois')
+    def assert_state_mapped(self, given, expected):
+        order = self.get_order(state=given)
         expected_address = '{},{},{},{}'.format(
             self.test_street_address,
             self.test_city,
-            'il',
-            self.test_zipcode
-        )
-        self.assertEqual(
-            expected_address, order.canonical_address)
-
-        order = self.get_order(state='New York')
-        expected_address = '{},{},{},{}'.format(
-            self.test_street_address,
-            self.test_city,
-            'ny',
+            expected,
             self.test_zipcode
         )
         self.assertEqual(
