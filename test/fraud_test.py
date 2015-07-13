@@ -2,7 +2,7 @@ import unittest
 
 from nose.tools import istest
 
-from hackerrank.fraud import Order
+from hackerrank.fraud import detect_fraud, Order
 
 
 class OrderShould(unittest.TestCase):
@@ -152,3 +152,99 @@ class OrderShould(unittest.TestCase):
         )
         self.assertEqual(
             expected_address, order.canonical_address)
+
+
+class DetectFraudShould(unittest.TestCase):
+
+    def get_order(
+            self,
+            order_id,
+            deal_id = '1',
+            email = 'test@yahoo.com',
+            street_address = '123 sesame stree',
+            city = 'oakland',
+            state = 'ca',
+            zipcode = '93331',
+            credit_num = 12345678910):
+        csv_record = '{},{},{},{},{},{},{},{}'.format(
+            order_id,
+            deal_id,
+            email,
+            street_address,
+            city,
+            state,
+            zipcode,
+            credit_num
+        )
+        return Order(csv_record)
+
+    @istest
+    def find_no_fraud_with_no_orders(self):
+        self.assertEqual([], detect_fraud([]))
+
+    @istest
+    def find_no_fraud_with_one_order(self):
+        order = self.get_order(1)
+        self.assertEqual([], detect_fraud([order]))
+
+    @istest
+    def find_no_fraud_when_deal_ids_differ(self):
+        order1 = self.get_order(1, deal_id=1)
+        order2 = self.get_order(2, deal_id=2)
+        order3 = self.get_order(3, deal_id=1)
+        self.assertEqual(
+            [1, 3], detect_fraud([order1, order2, order3]))
+
+    @istest
+    def find_fraud_with_identical_emails(self):
+        order1 = self.get_order(1, zipcode='1111')
+        order2 = self.get_order(2, zipcode='2222')
+        self.assertEqual([1, 2], detect_fraud([order1, order2]))
+
+    @istest
+    def find_fraud_with_colliding_emails(self):
+        order1 = self.get_order(
+            1, email='elmo@ss.com', zipcode='1111')
+        order2 = self.get_order(
+            2, email='elmo+10@sS.com', zipcode='2222')
+        order3 = self.get_order(
+            3, email='El.mo+10@sS.com', zipcode='3333')
+        self.assertEqual(
+            [1, 2, 3], detect_fraud([order1, order2, order3]))
+
+    @istest
+    def find_fraud_with_identical_addresses(self):
+        order1 = self.get_order(1, email='a@test.com')
+        order2 = self.get_order(2, email='not_a@test.org')
+        self.assertEqual([1, 2], detect_fraud([order1, order2]))
+
+    @istest
+    def find_fraud_with_colliding_addresses(self):
+        order1 = self.get_order(
+            1, state='ca', zipcode='12-4', email='a@t.com')
+        order2 = self.get_order(
+            2, state='CA', zipcode='124', email='b@t.com')
+        order3 = self.get_order(
+            3, state='CaliForniA', zipcode='1-24', email='c@t.com')
+        self.assertEqual(
+            [1, 2, 3], detect_fraud([order1, order2, order3]))
+
+    @istest
+    def find_fraud_when_email_and_address_identical(self):
+        order1 = self.get_order(1)
+        order2 = self.get_order(2)
+        order3 = self.get_order(3)
+        self.assertEqual(
+            [1, 2, 3], detect_fraud([order1, order2, order3]))
+
+    @istest
+    def find_fraud_when_email_and_address_collide(self):
+        order1 = self.get_order(1, zipcode='12', email='a@b.com')
+        order2 = self.get_order(2, zipcode='1-2', email='d@e.com')
+        order3 = self.get_order(3, zipcode='11', email='f@g.com')
+        order4 = self.get_order(4, zipcode='22', email='F@G.cOm')
+        self.assertEqual(
+            [1, 2, 3, 4],
+            detect_fraud([order1, order4, order2, order3])
+        )
+

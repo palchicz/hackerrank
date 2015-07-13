@@ -73,3 +73,25 @@ class Order:
         else:
             street_address = self._street_address
         return street_address
+
+def detect_fraud(orders):
+    email_suspects = _get_suspects(
+        orders, lambda order: order.canonical_email)
+    address_suspects = _get_suspects(
+        orders, lambda order: order.canonical_address)
+    suspect_ids = email_suspects.union(address_suspects)
+    return sorted(list(suspect_ids))
+
+def _get_suspects(orders, key_fnx):
+    collisions = {}
+    for order in orders:
+        key = (order.deal_id, key_fnx(order))
+        if key not in collisions:
+            collisions[key] = set()
+        collisions[key].add(order.order_id)
+
+    suspect_ids = set()
+    for order_ids in collisions.values():
+        if len(order_ids) > 1:
+            suspect_ids = suspect_ids.union(order_ids)
+    return suspect_ids
